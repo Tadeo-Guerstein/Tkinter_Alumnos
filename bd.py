@@ -7,7 +7,6 @@ class BaseDeDatos:
         return conexion
     
     def ingresarAlumnos(self, values):
-        print("alksdkjsadhsd")
         try:
             cone = self.abrir()
             cone.execute("insert into alumnos (dni, nombre, apellido) values (?, ?, ?)", values)
