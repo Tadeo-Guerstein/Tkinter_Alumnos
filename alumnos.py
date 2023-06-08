@@ -2,22 +2,34 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import scrolledtext as st
 from tkinter import messagebox as mb
+from tkinter import StringVar
+from bd import BaseDeDatos as bd
 
 class IngresarAlumnos: 
     def __init__(self, parent):
+        self.bd = bd()
+        self.dni = ttk.Label(parent, text="Dni:")
+        self.dni.grid(column=0, row=0, padx=4, pady=4)
         self.nombre = ttk.Label(parent, text="Nombre:")
-        self.nombre.grid(column=0, row=0, padx=4, pady=4)
+        self.nombre.grid(column=0, row=1, padx=4, pady=4)
         self.apellido = ttk.Label(parent, text="Apellido:")
-        self.apellido.grid(column=0, row=1, padx=4, pady=4)
+        self.apellido.grid(column=0, row=2, padx=4, pady=4)
+        self.entryDni = ttk.Entry(parent)
+        self.entryDni.grid(column=1, row=0, padx=4, pady=4)
         self.entryNombre = ttk.Entry(parent)
-        self.entryNombre.grid(column=1, row=0, padx=4, pady=4)
+        self.entryNombre.grid(column=1, row=1, padx=4, pady=4)
         self.entryApellido = ttk.Entry(parent)
-        self.entryApellido.grid(column=1, row=1, padx=4, pady=4)
+        self.entryApellido.grid(column=1, row=2, padx=4, pady=4)
         self.button = ttk.Button(parent, text="Ingresar", command=self.bdIngresarAlumnos)
-        self.button.grid(column=0, row=2, padx=10, pady=10)
+        self.button.grid(column=0, row=3, padx=10, pady=10)
 
     def bdIngresarAlumnos(self):
-        print("ingresando")
+        dni = int(self.entryDni.get())
+        nombre = self.entryNombre.get()
+        apellido = self.entryApellido.get()
+        values = (dni, nombre, apellido)
+        print("values", values)
+        self.bd.ingresarAlumnos(values)
         return
     
 class ListarAlumnos: 
@@ -39,26 +51,36 @@ class ListarAlumnos:
     
 class TraerAlumnos: 
     def __init__(self, parent):
-        self.idLabel = ttk.Label(parent, text="Id: ")
-        self.idLabel.grid(column=0, row=0, padx=4, pady=4)
-        self.idEntry = ttk.Entry(parent)
-        self.idEntry.grid(column=1, row=0, padx=4, pady=4)
+        self.bd = bd()
+        self.dniLabel = ttk.Label(parent, text="Dni: ")
+        self.dniLabel.grid(column=0, row=0, padx=4, pady=4)
+        self.dniString = StringVar()
+        self.dniEntry = ttk.Entry(parent, textvariable=self.dniString)
+        self.dniEntry.grid(column=1, row=0, padx=4, pady=4)
         
         self.nombreLabel = ttk.Label(parent, text="Nombre: ")
         self.nombreLabel.grid(column=0, row=1, padx=4, pady=4)
-        self.nombreEntry = ttk.Entry(parent, state="readonly")
+        self.nombreString = StringVar()
+        self.nombreEntry = ttk.Entry(parent, state="readonly", textvariable=self.nombreString)
         self.nombreEntry.grid(column=1, row=1, padx=4, pady=4)
         
         self.apellidoLabel = ttk.Label(parent, text="Apellido: ")
         self.apellidoLabel.grid(column=0, row=2, padx=4, pady=4)
-        self.apellidoEntry = ttk.Entry(parent, state="readonly")
+        self.apellidoString = StringVar()
+        self.apellidoEntry = ttk.Entry(parent, state="readonly", textvariable=self.apellidoString)
         self.apellidoEntry.grid(column=1, row=2, padx=4, pady=4)
         
         self.button = ttk.Button(parent, text="Ingresar", command=self.bdBuscarAlumno)
         self.button.grid(column=0, row=3, padx=10, pady=10)
 
     def bdBuscarAlumno(self):
-        print("buscando")
+        dni = int(self.dniEntry.get())
+        result = self.bd.buscarAlumno(dni)
+        print(result)
+        print(result[0])
+        self.dniString.set(result[0])
+        self.nombreString.set(result[1])
+        self.apellidoString.set(result[2])
         return
     
 class ModificarAlumnos: 
