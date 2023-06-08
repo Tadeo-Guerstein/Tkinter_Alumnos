@@ -4,54 +4,75 @@ from tkinter import scrolledtext as st
 from tkinter import messagebox as mb
 from tkinter import StringVar
 from bd import BaseDeDatos as bd
+from sqlite3 import IntegrityError
 
 class IngresarAlumnos: 
     def __init__(self, parent):
         self.bd = bd()
+
         self.dni = ttk.Label(parent, text="Dni:")
         self.dni.grid(column=0, row=0, padx=4, pady=4)
+        self.dniString = StringVar()
+        self.entryDni = ttk.Entry(parent, textvariable=self.dniString)
+        self.entryDni.grid(column=1, row=0, padx=4, pady=4)
+
         self.nombre = ttk.Label(parent, text="Nombre:")
         self.nombre.grid(column=0, row=1, padx=4, pady=4)
+        self.nombreString = StringVar()
+        self.entryNombre = ttk.Entry(parent, textvariable=self.nombreString)
+        self.entryNombre.grid(column=1, row=1, padx=4, pady=4)
+        
         self.apellido = ttk.Label(parent, text="Apellido:")
         self.apellido.grid(column=0, row=2, padx=4, pady=4)
-        self.entryDni = ttk.Entry(parent)
-        self.entryDni.grid(column=1, row=0, padx=4, pady=4)
-        self.entryNombre = ttk.Entry(parent)
-        self.entryNombre.grid(column=1, row=1, padx=4, pady=4)
-        self.entryApellido = ttk.Entry(parent)
+        self.apellidoString = StringVar()
+        self.entryApellido = ttk.Entry(parent, textvariable=self.apellidoString)
         self.entryApellido.grid(column=1, row=2, padx=4, pady=4)
+
         self.button = ttk.Button(parent, text="Ingresar", command=self.bdIngresarAlumnos)
         self.button.grid(column=0, row=3, padx=10, pady=10)
 
     def bdIngresarAlumnos(self):
-        dni = int(self.entryDni.get())
-        nombre = self.entryNombre.get()
-        apellido = self.entryApellido.get()
-        values = (dni, nombre, apellido)
-        print("values", values)
-        self.bd.ingresarAlumnos(values)
-        return
+        try:
+            dni = int(self.entryDni.get())
+            nombre = self.entryNombre.get()
+            apellido = self.entryApellido.get()
+            if(not nombre or not apellido):
+                raise SyntaxError
+            values = (dni, nombre, apellido)
+            self.bd.ingresarAlumnos(values)
+        except IntegrityError:
+            mb.showerror("Error", "Ya hay un alumno con ese dni")
+        except SyntaxError:
+            mb.showerror("Error", "Tiene que ingresar datos en todos los campos")
+        except ValueError:
+            mb.showerror("Error", "Tiene que ingresar un dni apropiado")
+        finally:
+            mb.showinfo("Ingresado", "Se ingresó correctamente el alumno")
+            self.dniString.set("")
+            self.nombreString.set("")
+            self.apellidoString.set("")
     
 class ListarAlumnos: 
     def __init__(self, parent):
-        self.titulo = ttk.Label(parent, text="Listado")
-        self.titulo.grid(column=0, row=0, padx=4, pady=4)
+        self.bd = bd()
+
         self.button = ttk.Button(parent, text="Ingresar", command=self.bdListarAlumnos)
         self.button.grid(column=0, row=2, padx=10, pady=10)
+
         self.scrollView = st.ScrolledText(parent, width=30, height=15)
         self.scrollView.grid(column=0, row=3, padx=10, pady=10)
 
     def bdListarAlumnos(self):
-        print("listando")
-        respuesta=[{"id": 1, "nombre": "Tadeo", "apellido": "Guerstein"}]
-        self.scrollView.delete("1.0", tk.END)        
-        for fila in respuesta:
-            self.scrollView.insert(tk.END, "id: " + str(fila["id"]) + "\nnombre: " + str(fila["nombre"]) + "\napellido: " + str(fila["apellido"]) + "\n\n")
+        result = self.bd.buscarAlumnos()
+        self.scrollView.delete("1.0", tk.END)      
+        for fila in result:
+            self.scrollView.insert(tk.END, "id: " + str(fila[0]) + "\nnombre: " + str(fila[1]) + "\napellido: " + str(fila[2]) + "\n\n")
         return
     
 class TraerAlumnos: 
     def __init__(self, parent):
         self.bd = bd()
+
         self.dniLabel = ttk.Label(parent, text="Dni: ")
         self.dniLabel.grid(column=0, row=0, padx=4, pady=4)
         self.dniString = StringVar()
@@ -74,30 +95,37 @@ class TraerAlumnos:
         self.button.grid(column=0, row=3, padx=10, pady=10)
 
     def bdBuscarAlumno(self):
-        dni = int(self.dniEntry.get())
-        result = self.bd.buscarAlumno(dni)
-        print(result)
-        print(result[0])
-        self.dniString.set(result[0])
-        self.nombreString.set(result[1])
-        self.apellidoString.set(result[2])
-        return
+        try:
+            dni = int(self.dniEntry.get())
+            result = self.bd.buscarAlumno(dni)
+            self.dniString.set(result[0])
+            self.nombreString.set(result[1])
+            self.apellidoString.set(result[2])
+        except ValueError:
+            mb.showerror("Error", "Tiene que ingresar un dni apropiado")
+        except TypeError:
+            mb.showerror("Error", "No existe alumno con ese dni")
     
 class ModificarAlumnos: 
     def __init__(self, parent):
-        self.idLabel = ttk.Label(parent, text="Id: ")
-        self.idLabel.grid(column=0, row=0, padx=4, pady=4)
-        self.idEntry = ttk.Entry(parent)
-        self.idEntry.grid(column=1, row=0, padx=4, pady=4)
+        self.bd = bd()
+
+        self.dniLabel = ttk.Label(parent, text="Dni: ")
+        self.dniLabel.grid(column=0, row=0, padx=4, pady=4)
+        self.dniString = StringVar()
+        self.dniEntry = ttk.Entry(parent, textvariable=self.dniString)
+        self.dniEntry.grid(column=1, row=0, padx=4, pady=4)
         
         self.nombreLabel = ttk.Label(parent, text="Nombre: ")
         self.nombreLabel.grid(column=0, row=1, padx=4, pady=4)
-        self.nombreEntry = ttk.Entry(parent)
+        self.nombreString = StringVar()
+        self.nombreEntry = ttk.Entry(parent, textvariable=self.nombreString)
         self.nombreEntry.grid(column=1, row=1, padx=4, pady=4)
         
         self.apellidoLabel = ttk.Label(parent, text="Apellido: ")
         self.apellidoLabel.grid(column=0, row=2, padx=4, pady=4)
-        self.apellidoEntry = ttk.Entry(parent)
+        self.apellidoString = StringVar()
+        self.apellidoEntry = ttk.Entry(parent, textvariable=self.apellidoString)
         self.apellidoEntry.grid(column=1, row=2, padx=4, pady=4)
         
         self.button = ttk.Button(parent, text="Consultar", command=self.bdBuscarAlumno)
@@ -106,26 +134,51 @@ class ModificarAlumnos:
         self.button.grid(column=0, row=4, padx=10, pady=5)
 
     def bdBuscarAlumno(self):
-        print("buscando")
-        return
+        try:
+            dni = int(self.dniEntry.get())
+            result = self.bd.buscarAlumno(dni)
+            self.dniString.set(result[0])
+            self.nombreString.set(result[1])
+            self.apellidoString.set(result[2])
+        except ValueError:
+            mb.showerror("Error", "Tiene que ingresar un dni apropiado")
+        except TypeError:
+            mb.showerror("Error", "No existe alumno con ese dni")
     
     def bdModificarAlumno(self):
-        mb.showinfo("Aviso", "Se modificó correctamente")
-        return
+        try:
+            dni = int(self.dniEntry.get())
+            nombre = self.nombreEntry.get()
+            apellido = self.apellidoEntry.get()
+            if(not nombre or not apellido):
+                raise SyntaxError
+            values = (nombre, apellido, dni)
+            self.bd.modificarAlumnos(values)
+            mb.showinfo("Modificar", "Se modificó correctamente al alumno")
+        except ValueError:
+            mb.showerror("Error", "Tiene que ingresar un dni apropiado")
+        except SyntaxError:
+            mb.showerror("Error", "Tiene que ingresar datos en todos los campos")
 
 class BorrarAlumnos: 
     def __init__(self, parent):
-        self.idLabel = ttk.Label(parent, text="Id: ")
-        self.idLabel.grid(column=0, row=0, padx=4, pady=4)
-        self.idEntry = ttk.Entry(parent)
-        self.idEntry.grid(column=1, row=0, padx=4, pady=4)
+        self.bd = bd()
+
+        self.dniLabel = ttk.Label(parent, text="Dni: ")
+        self.dniLabel.grid(column=0, row=0, padx=4, pady=4)
+        self.dniEntry = ttk.Entry(parent)
+        self.dniEntry.grid(column=1, row=0, padx=4, pady=4)
         
         self.button = ttk.Button(parent, text="Ingresar", command=self.bdBorrarAlumno)
         self.button.grid(column=0, row=3, padx=10, pady=10)
 
     def bdBorrarAlumno(self):
-        mb.showinfo("Aviso", "Se eliminó correctamente")
-        return
+        try:
+            dni = int(self.dniEntry.get())
+            self.bd.borrarAlumnos(dni)
+            mb.showinfo("Borrado", "Se borró correctamente al alumno")
+        except ValueError:
+            mb.showerror("Error", "Tiene que ingresar un dni apropiado")
 
 
 # Preparación app

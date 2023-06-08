@@ -22,3 +22,28 @@ class BaseDeDatos:
             return fila
         finally:
             cone.close()
+
+    def buscarAlumnos(self):
+        try:
+            cone = self.abrir()
+            cursor = cone.execute("select dni,nombre,apellido from alumnos")
+            fila = cursor.fetchall()
+            return fila
+        finally:
+            cone.close()
+    
+    def modificarAlumnos(self, values):
+        try:
+            cone = self.abrir()
+            cone.execute("update alumnos set nombre=?, apellido=? where dni=?", values)
+            cone.commit()
+        finally:
+            cone.close()
+
+    def borrarAlumnos(self, dni):
+        try:
+            cone = self.abrir()
+            cone.execute("delete from alumnos where dni=?", (dni, ))
+            cone.commit()
+        finally:
+            cone.close()
